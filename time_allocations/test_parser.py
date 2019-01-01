@@ -12,6 +12,10 @@ class TestAllocationValidAllocations( unittest.TestCase ):
     VALID_DATE_STRING    = "Monday 1/1\n"
     FIRST_VA_LINE_NUMBER = 2
 
+    # allocations should be parsed strictly so exceptions are raised rather than
+    # reported.
+    strict_config = allocations_module.AllocationsConfig( strict_parsing=True )
+
     def test_valid_date_month_day( self ):
         """
         Verifies the form and content of date lines.  Iterates through each
@@ -30,6 +34,9 @@ class TestAllocationValidAllocations( unittest.TestCase ):
         months_with_30_days = [4, 6, 9, 11]
         months_with_31_days = [1, 3, 5, 7, 8, 10, 12]
 
+        allocation = allocations_module.Allocations( None,
+                                                     configuration=TestAllocationValidAllocations.strict_config )
+
         # iterate through all the possibilities of weekday and month/date.
         for weekday in weekdays:
             # handle February since there is only one month with 28 or 29 days.
@@ -38,12 +45,9 @@ class TestAllocationValidAllocations( unittest.TestCase ):
                 padded_date_1_string = "{:s} 2/{:02d}\n".format( weekday, day_number )
                 padded_date_2_string = "{:s} 02/{:02d}\n".format( weekday, day_number )
 
-                allocation = allocations_module.Allocations( date_string,
-                                                             strict_parsing=True )
-                allocation = allocations_module.Allocations( padded_date_1_string,
-                                                             strict_parsing=True )
-                allocation = allocations_module.Allocations( padded_date_2_string,
-                                                             strict_parsing=True )
+                allocation.parse( date_string )
+                allocation.parse( padded_date_1_string )
+                allocation.parse( padded_date_2_string )
 
             # handle the months with 30 days in them.
             for month_number in months_with_30_days:
@@ -58,12 +62,9 @@ class TestAllocationValidAllocations( unittest.TestCase ):
                                                                           month_number,
                                                                           day_number )
 
-                    allocation = allocations_module.Allocations( date_string,
-                                                                 strict_parsing=True )
-                    allocation = allocations_module.Allocations( padded_date_1_string,
-                                                                 strict_parsing=True )
-                    allocation = allocations_module.Allocations( padded_date_2_string,
-                                                                 strict_parsing=True )
+                    allocation.parse( date_string )
+                    allocation.parse( padded_date_1_string )
+                    allocation.parse( padded_date_2_string )
 
             # handle the months with 31 days in them.
             for month_number in months_with_31_days:
@@ -78,13 +79,9 @@ class TestAllocationValidAllocations( unittest.TestCase ):
                                                                           month_number,
                                                                           day_number )
 
-                    allocation = allocations_module.Allocations( date_string,
-                                                                 strict_parsing=True )
-                    allocation = allocations_module.Allocations( padded_date_1_string,
-                                                                 strict_parsing=True )
-                    allocation = allocations_module.Allocations( padded_date_2_string,
-                                                                 strict_parsing=True )
-
+                    allocation.parse( date_string )
+                    allocation.parse( padded_date_1_string )
+                    allocation.parse( padded_date_2_string )
 
         # XXX: validate with year
 
@@ -101,12 +98,12 @@ class TestAllocationValidAllocations( unittest.TestCase ):
         subcategory_string     = "category (sub-category): 1 hour\n"
         subsubcategory_string  = "category (sub-category (sub-category)): 2 hours\n"
 
-        allocation = allocations_module.Allocations( self.VALID_DATE_STRING + single_category_string,
-                                                     strict_parsing=True )
-        allocation = allocations_module.Allocations( self.VALID_DATE_STRING + subcategory_string,
-                                                     strict_parsing=True )
-        allocation = allocations_module.Allocations( self.VALID_DATE_STRING + subsubcategory_string,
-                                                     strict_parsing=True )
+        allocation = allocations_module.Allocations( None,
+                                                     configuration=TestAllocationValidAllocations.strict_config )
+
+        allocation.parse( self.VALID_DATE_STRING + single_category_string )
+        allocation.parse( self.VALID_DATE_STRING + subcategory_string )
+        allocation.parse( self.VALID_DATE_STRING + subsubcategory_string )
 
     def test_valid_allocation_duration( self ):
         """
@@ -121,23 +118,23 @@ class TestAllocationValidAllocations( unittest.TestCase ):
         fractional_duration_4_string = "category: 1.0 hours\n"
         fractional_duration_5_string = "category: 1. hour\n"
 
-        allocation = allocations_module.Allocations( self.VALID_DATE_STRING + integral_duration_string,
-                                                     strict_parsing=True )
-        allocation = allocations_module.Allocations( self.VALID_DATE_STRING + fractional_duration_1_string,
-                                                     strict_parsing=True )
-        allocation = allocations_module.Allocations( self.VALID_DATE_STRING + fractional_duration_2_string,
-                                                     strict_parsing=True )
-        allocation = allocations_module.Allocations( self.VALID_DATE_STRING + fractional_duration_3_string,
-                                                     strict_parsing=True )
-        allocation = allocations_module.Allocations( self.VALID_DATE_STRING + fractional_duration_4_string,
-                                                     strict_parsing=True )
-        allocation = allocations_module.Allocations( self.VALID_DATE_STRING + fractional_duration_5_string,
-                                                     strict_parsing=True )
+        allocation = allocations_module.Allocations( None,
+                                                     configuration=TestAllocationValidAllocations.strict_config )
+
+        allocation.parse( self.VALID_DATE_STRING + integral_duration_string )
+        allocation.parse( self.VALID_DATE_STRING + fractional_duration_1_string )
+        allocation.parse( self.VALID_DATE_STRING + fractional_duration_2_string )
+        allocation.parse( self.VALID_DATE_STRING + fractional_duration_3_string )
+        allocation.parse( self.VALID_DATE_STRING + fractional_duration_4_string )
+        allocation.parse( self.VALID_DATE_STRING + fractional_duration_5_string )
 
     def test_valid_allocation_categories( self ):
         """
         Verifies allocations can have nested sub-categories.
         """
+
+        allocation = allocations_module.Allocations( None,
+                                                     configuration=TestAllocationValidAllocations.strict_config )
 
         # number of nesting levels to test.  this should be significantly larger
         # than any sane person would use.
@@ -152,8 +149,7 @@ class TestAllocationValidAllocations( unittest.TestCase ):
                                                                       ")" * nesting_index,
                                                                       nesting_index + 1,
                                                                       "" if nesting_index == 0 else "s" )
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + test_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + test_string )
 
             # nest another subcategory for the next iteration.
             subcategory_string = "{:s} ({:s}category".format( subcategory_string,
@@ -171,8 +167,10 @@ class TestAllocationValidAllocations( unittest.TestCase ):
                             "category1 (subcategoryA): .75 hours\n" +
                             "category2 (subcategoryB): 1.0 hour\n")
 
-        allocation = allocations_module.Allocations( self.VALID_DATE_STRING + example_1_string,
-                                                     strict_parsing=True )
+        allocation = allocations_module.Allocations( None,
+                                                     configuration=TestAllocationValidAllocations.strict_config )
+
+        allocation.parse( self.VALID_DATE_STRING + example_1_string )
 
         # XXX more here
 
@@ -189,20 +187,16 @@ class TestAllocationValidAllocations( unittest.TestCase ):
         duration_notes_3_string             = "09:15-19:00 20:15-23:00 (12.5 hours)\n"
         duration_notes_4_string             = "07:00-12:00 13:00-\n"
 
-        allocation = allocations_module.Allocations( self.VALID_DATE_STRING + empty_line_string,
-                                                     strict_parsing=True )
-        allocation = allocations_module.Allocations( self.VALID_DATE_STRING + commented_invalid_allocation_string,
-                                                     strict_parsing=True )
-        allocation = allocations_module.Allocations( self.VALID_DATE_STRING + divider_string,
-                                                     strict_parsing=True )
-        allocation = allocations_module.Allocations( self.VALID_DATE_STRING + duration_notes_1_string,
-                                                     strict_parsing=True )
-        allocation = allocations_module.Allocations( self.VALID_DATE_STRING + duration_notes_2_string,
-                                                     strict_parsing=True )
-        allocation = allocations_module.Allocations( self.VALID_DATE_STRING + duration_notes_3_string,
-                                                     strict_parsing=True )
-        allocation = allocations_module.Allocations( self.VALID_DATE_STRING + duration_notes_4_string,
-                                                     strict_parsing=True )
+        allocation = allocations_module.Allocations( None,
+                                                     configuration=TestAllocationValidAllocations.strict_config )
+
+        allocation.parse( self.VALID_DATE_STRING + empty_line_string )
+        allocation.parse( self.VALID_DATE_STRING + commented_invalid_allocation_string )
+        allocation.parse( self.VALID_DATE_STRING + divider_string )
+        allocation.parse( self.VALID_DATE_STRING + duration_notes_1_string )
+        allocation.parse( self.VALID_DATE_STRING + duration_notes_2_string )
+        allocation.parse( self.VALID_DATE_STRING + duration_notes_3_string )
+        allocation.parse( self.VALID_DATE_STRING + duration_notes_4_string )
 
 class TestAllocationAllocationNormalizations( unittest.TestCase ):
     """
@@ -223,6 +217,10 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
     VALID_DATE_STRING         = "Monday 1/1\n"
     FIRST_INVALID_LINE_NUMBER = 2
 
+    # allocations should be parsed strictly so exceptions are raised rather than
+    # reported.
+    strict_config = allocations_module.AllocationsConfig( strict_parsing=True )
+
     def test_invalid_date_form( self ):
         """
         Verifies that date lines with invalid formatting are not accepted.
@@ -230,6 +228,9 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
         well as <month>/<date> combinations that are either missing a component
         or have extraneous whitespace in them.
         """
+
+        allocation = allocations_module.Allocations( None,
+                                                     configuration=TestAllocationInvalidAllocations.strict_config )
 
         valid_weekdays   = ["Sunday",
                             "Monday",
@@ -259,16 +260,14 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
                                          re.escape( "{:s}:1 - Invalid weekday in date ({:s})".format(
                                              allocations_module.STRING_INPUT_LABEL,
                                              weekday.lower() ) ) ):
-                allocation = allocations_module.Allocations( lowercase_date_string,
-                                                             strict_parsing=True )
+                allocation.parse( lowercase_date_string )
 
             # uppercase weekday.
             with self.assertRaisesRegex( ValueError,
                                          re.escape( "{:s}:1 - Invalid weekday in date ({:s})".format(
                                              allocations_module.STRING_INPUT_LABEL,
                                              weekday.upper() ) ) ):
-                allocation = allocations_module.Allocations( uppercase_date_string,
-                                               strict_parsing=True )
+                allocation.parse( uppercase_date_string )
 
         # verify that abbreviated weekdays (capitalized, lowercase, and
         # uppercase) are invalid.
@@ -285,46 +284,39 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
                                          re.escape( "{:s}:1 - Invalid weekday in date ({:s})".format(
                                              allocations_module.STRING_INPUT_LABEL,
                                              weekday ) ) ):
-                allocation = allocations_module.Allocations( date_string,
-                                                             strict_parsing=True )
+                allocation.parse( date_string )
 
             # lowercase abbreviated weekday.
             with self.assertRaisesRegex( ValueError,
                                          re.escape( "{:s}:1 - Invalid weekday in date ({:s})".format(
                                              allocations_module.STRING_INPUT_LABEL,
                                              weekday.lower() ) ) ):
-                allocation = allocations_module.Allocations( lowercase_date_string,
-                                                             strict_parsing=True )
+                allocation.parse( lowercase_date_string )
 
             # uppercase abbreviated weekday.
             with self.assertRaisesRegex( ValueError,
                                          re.escape( "{:s}:1 - Invalid weekday in date ({:s})".format(
                                              allocations_module.STRING_INPUT_LABEL,
                                              weekday.upper() ) ) ):
-                allocation = allocations_module.Allocations( uppercase_date_string,
-                                                             strict_parsing=True )
+                allocation.parse( uppercase_date_string )
 
         # verify invalid <month>/<date> forms aren't accepted.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:1 - Date is not well formed".format(
                                          allocations_module.STRING_INPUT_LABEL ) ) ):
-            allocation = allocations_module.Allocations( invalid_date_1_string,
-                                                         strict_parsing=True )
+            allocation.parse( invalid_date_1_string )
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:1 - Date is not well formed".format(
                                          allocations_module.STRING_INPUT_LABEL ) ) ):
-            allocation = allocations_module.Allocations( invalid_date_2_string,
-                                                         strict_parsing=True )
+            allocation.parse( invalid_date_2_string )
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:1 - Date is not well formed".format(
                                          allocations_module.STRING_INPUT_LABEL ) ) ):
-            allocation = allocations_module.Allocations( invalid_date_3_string,
-                                                         strict_parsing=True )
+            allocation.parse( invalid_date_3_string )
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:1 - Date is not well formed".format(
                                          allocations_module.STRING_INPUT_LABEL ) ) ):
-            allocation = allocations_module.Allocations( invalid_date_4_string,
-                                                         strict_parsing=True )
+            allocation.parse( invalid_date_4_string )
 
 
     def test_invalid_date_month_day( self ):
@@ -332,6 +324,9 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
         Verifies that date lines do not accept invalid <month>/<day>
         combinations.
         """
+
+        allocation = allocations_module.Allocations( None,
+                                                     configuration=TestAllocationInvalidAllocations.strict_config )
 
         # segment our months by the number of days.  February is handled
         # separately below.
@@ -358,8 +353,7 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
                                              re.escape( "{:s}:1 - Month is invalid ({:d})".format(
                                                  allocations_module.STRING_INPUT_LABEL,
                                                  month_number ) ) ):
-                    allocation = allocations_module.Allocations( date_string,
-                                                                 strict_parsing=True )
+                    allocation.parse( date_string )
 
         # verify we don't accept invalid days (0, 31ish+) for valid months
         # (1-12), handling each month's duration properly.
@@ -379,8 +373,7 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
                                                  allocations_module.STRING_INPUT_LABEL,
                                                  month_number,
                                                  day_number ) ) ):
-                    allocation = allocations_module.Allocations( date_string,
-                                                                 strict_parsing=True )
+                    allocation.parse( date_string )
 
         # XXX: add support for years here
 
@@ -390,6 +383,9 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
 
           <categories>: <duration>
         """
+
+        allocation = allocations_module.Allocations( None,
+                                                     configuration=TestAllocationInvalidAllocations.strict_config )
 
         category_only_string       = "invalid:\n"
 #        multiple_separators_string = "invalid: 0.5: hours\n"
@@ -403,8 +399,7 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER,
                                          category_only_string.strip() ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + category_only_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + category_only_string )
 
         # multiple separators.
         # with self.assertRaisesRegex( ValueError,
@@ -412,8 +407,7 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
         #                                  allocations_module.STRING_INPUT_LABEL,
         #                                  self.FIRST_INVALID_LINE_NUMBER,
         #                                  multiple_separators_string.strip() ) ) ):
-        #     allocation = allocations_module.Allocations( self.VALID_DATE_STRING + multiple_separators_string,
-        #                                                  strict_parsing=True )
+        #     allocation.parse( self.VALID_DATE_STRING + multiple_separators_string )
 
         # no separator string between category and duration.
         with self.assertRaisesRegex( ValueError,
@@ -421,8 +415,7 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER,
                                          no_separator_string.strip() ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + no_separator_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + no_separator_string )
 
         # duration only, no category.
         with self.assertRaisesRegex( ValueError,
@@ -430,8 +423,7 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER,
                                          duration_only_string.strip() ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + duration_only_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + duration_only_string )
 
         # separator only, no duration or category.
         with self.assertRaisesRegex( ValueError,
@@ -439,14 +431,16 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER,
                                          separator_only_string.strip() ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + separator_only_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + separator_only_string )
 
     def test_invalid_allocation_missing_unit( self ):
         """
         Verifies parsing fails if the allocation's duration does not have its units
         specified.
         """
+
+        allocation = allocations_module.Allocations( None,
+                                                     configuration=TestAllocationInvalidAllocations.strict_config )
 
         input_string = "invalid (no unit): .5\n"
 
@@ -455,13 +449,15 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER,
                                          input_string.strip() ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + input_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + input_string )
 
     def test_invalid_allocation_invalid_unit( self ):
         """
         Verifies parsing fails if the allocation's duration has invalid units.
         """
+
+        allocation = allocations_module.Allocations( None,
+                                                     configuration=TestAllocationInvalidAllocations.strict_config )
 
         h_string       = "invalid (incorrect units): 1 h"
         hr_string      = "invalid (incorrect units): 2 hr"
@@ -473,61 +469,56 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
                                      re.escape( "{:s}:{:d} - Allocation has wrong units - expected \"hours\" but received \"h\"".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + h_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + h_string )
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has wrong units - expected \"hours\" but received \"H\"".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + h_string.upper(),
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + h_string.upper() )
 
         # "hr" or "HR" instead of hours.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has wrong units - expected \"hours\" but received \"hr\"".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + hr_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + hr_string )
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has wrong units - expected \"hours\" but received \"HR\"".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + hr_string.upper(),
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + hr_string.upper() )
 
         # "hrs" or "HRS" instead of hours.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has wrong units - expected \"hours\" but received \"hrs\"".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + hrs_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + hrs_string )
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has wrong units - expected \"hours\" but received \"HRS\"".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + hrs_string.upper(),
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + hrs_string.upper() )
 
         # "seconds" or "SECONDS" instead of hours.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has wrong units - expected \"hours\" but received \"seconds\"".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + seconds_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + seconds_string )
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has wrong units - expected \"hours\" but received \"SECONDS\"".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + seconds_string.upper(),
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + seconds_string.upper() )
 
     def test_invalid_allocation_invalid_duration( self ):
         """
         Verifies parsing fails if the allocation's duration is invalid.
         """
+
+        allocation = allocations_module.Allocations( None,
+                                                     configuration=TestAllocationInvalidAllocations.strict_config )
 
         negative_integer_string = "invalid (negative duration): -1 hours"
         negative_float_string   = "invalid (negative duration): -1.0 hours"
@@ -547,85 +538,78 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
                                      re.escape( "{:s}:{:d} - Allocation has invalid duration".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + negative_integer_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + negative_integer_string )
 
         # negative floating point duration.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has invalid duration".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + negative_float_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + negative_float_string )
 
         # zero integer duration.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has invalid duration".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + zero_integer_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + zero_integer_string )
 
         # zero floating point duration.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has invalid duration".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + zero_float_1_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + zero_float_1_string )
 
         # zero floating point duration (with extra zeros).
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has invalid duration".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + zero_float_2_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + zero_float_2_string )
 
         # zero floating point duration (no leading zero).
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has invalid duration".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + zero_float_3_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + zero_float_3_string )
 
         # zero floating point duration (no leading zero, with a negative sign).
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has invalid duration".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + zero_float_4_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + zero_float_4_string )
 
         # scientific notation duration.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has invalid duration".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + invalid_time_1_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + invalid_time_1_string )
 
         # hexadecimal notation duration.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has invalid duration".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + invalid_time_2_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + invalid_time_2_string )
 
         # non-numeric duration.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has invalid duration".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + invalid_time_3_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + invalid_time_3_string )
 
     def test_invalid_allocation_invalid_categories( self ):
         """
         Verifies parsing fails if the allocation's categories are invalid.
         """
+
+        allocation = allocations_module.Allocations( None,
+                                                     configuration=TestAllocationInvalidAllocations.strict_config )
 
         # empty categories.
         empty_category_1_string = ": 1 hour"
@@ -658,73 +642,63 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
                                      re.escape( "{:s}:{:d} - Allocation is not well formed".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + empty_category_1_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + empty_category_1_string )
 
         # empty category, after normalization.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation is not well formed".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + empty_category_2_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + empty_category_2_string )
 
         # empty category, with sub-categories.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has an empty category".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + empty_category_3_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + empty_category_3_string )
 
         # empty category, with sub-categories.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has an empty category".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + empty_category_4_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + empty_category_4_string )
 
         # category with an empty sub-category.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has an empty sub-category (nesting level 1)".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + empty_subcategory_1_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + empty_subcategory_1_string )
 
         # category with an empty sub-category (after whitespace normalization).
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has an empty sub-category (nesting level 1)".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + empty_subcategory_2_string,
-                                                         strict_parsing=True )
-
+            allocation.parse( self.VALID_DATE_STRING + empty_subcategory_2_string )
 
         # empty category with an empty sub-category.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has an empty category".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + empty_subcategory_3_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + empty_subcategory_3_string )
 
         # empty category (after whitespace normalization) with an empty sub-category.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has an empty category".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + empty_subcategory_4_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + empty_subcategory_4_string )
 
         # category and sub-category with an empty sub-sub-category.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has an empty sub-category (nesting level 2)".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + empty_subsubcategory_1_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + empty_subsubcategory_1_string )
 
         # category and sub-category with an empty sub-sub-category (after
         # whitespace normalization).
@@ -732,8 +706,7 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
                                      re.escape( "{:s}:{:d} - Allocation has an empty sub-category (nesting level 2)".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + empty_subsubcategory_2_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + empty_subsubcategory_2_string )
 
 
         # unbalanced sub-category parentheses (open-only).
@@ -741,16 +714,14 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
                                      re.escape( "{:s}:{:d} - Allocation has an unmatched open parenthesis".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + unbalanced_subcategory_1_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + unbalanced_subcategory_1_string )
 
         # unbalanced sub-category parentheses (close-only).
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has a closing parenthesis without an open".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + unbalanced_subcategory_2_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + unbalanced_subcategory_2_string )
 
         # unbalanced sub-category parentheses (typo, close when an open was
         # needed).
@@ -758,8 +729,7 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
                                      re.escape( "{:s}:{:d} - Allocation has a closing parenthesis without an open".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + unbalanced_subcategory_3_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + unbalanced_subcategory_3_string )
 
         # unbalanced sub-category parentheses (missing close parenthesis for
         # sub-category after sub-sub-category).
@@ -767,32 +737,28 @@ class TestAllocationInvalidAllocations( unittest.TestCase ):
                                      re.escape( "{:s}:{:d} - Allocation has an unmatched open parenthesis".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + unbalanced_subcategory_4_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + unbalanced_subcategory_4_string )
 
         # two sub-categories for the category.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has multiple sub-categories".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + unnested_subcategory_1_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + unnested_subcategory_1_string )
 
         # two sub-categories for the category.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has multiple sub-categories".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + unnested_subcategory_1_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + unnested_subcategory_1_string )
 
         # two sub-sub-categories for the sub-category.
         with self.assertRaisesRegex( ValueError,
                                      re.escape( "{:s}:{:d} - Allocation has multiple sub-categories".format(
                                          allocations_module.STRING_INPUT_LABEL,
                                          self.FIRST_INVALID_LINE_NUMBER ) ) ):
-            allocation = allocations_module.Allocations( self.VALID_DATE_STRING + unnested_subcategory_2_string,
-                                                         strict_parsing=True )
+            allocation.parse( self.VALID_DATE_STRING + unnested_subcategory_2_string )
 
 if __name__ == "__main__":
     unittest.main()

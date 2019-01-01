@@ -5,9 +5,50 @@ import sys
 
 STRING_INPUT_LABEL = "(string)"
 
+class AllocationsConfig( object ):
+    """
+    """
+
+    def __init__( self, default_year=None, strict_parsing=False, validate_dates=True ):
+        """
+        """
+
+        self._default_year   = default_year
+        self._strict_parsing = strict_parsing
+        self._validate_dates = validate_dates
+
+    def defaults():
+        """
+        """
+
+        return AllocationsConfig()
+
+    def get( self, key ):
+        """
+        """
+
+        if key == "default_year":
+            return self._default_year
+        elif key == "strict_parsing":
+            return self._strict_parsing
+        elif key == "validate_dates":
+            return self._validate_dates
+        else:
+            return KeyError( "Unknown key ({:s})".format( key ) )
+
+    def from_file( file_name ):
+        """
+        """
+
+    def to_file( self, file_file ):
+        """
+        """
+
 class Allocations( object ):
     """
     """
+
+    
 
     # patterns for date-like and allocation-like lines.  used to determine
     # whether the parser should complain about a line that it didn't parse or
@@ -33,7 +74,7 @@ class Allocations( object ):
     # accept integral and fractional, positive durations.
     valid_duration_pattern   = re.compile( r"^((0?\.0*)?[1-9]\d*|[1-9]+\.\d*)$" )
 
-    def __init__( self, file_like, strict_parsing=False, validate_dates=False, default_year=None ):
+    def __init__( self, file_like, configuration=None ):
         # XXX: factor this out into a parse routine so additional fragments can
         #      be consumed by the object.
         """
@@ -47,27 +88,28 @@ class Allocations( object ):
           default_year   - Optional
         """
 
+        if configuration is None:
+            configuration = AllocationsConfig.defaults()
+
+        self._configuration = configuration
+
         # XXX
-        self._current_year = default_year
-
-        # XXX:
-        self._number_errors = 0
-
-        # XXX: pull in year and parsing flag
-        self._configuration = {}
-
-        # XXX:
-        self._number_errors = 0
+        self._current_year = configuration.get( "default_year" )
 
         # determines how improperly formatted lines are handled.  exceptions are
         # raised when strictness is requested, warnings on standard error
         # otherwise.
-        self._strict_parsing = strict_parsing
+        self._strict_parsing = configuration.get( "strict_parsing" )
+
+        # we start at zero errors during parsing.
+        self._number_errors = 0
+
+        if file_like is not None:
+            self.parse( file_like )
 
         # we don't care about the status returned.  either we threw an exception
         # and didn't fully construct an object, or we've complained and the
         # caller can check a non-zero number of errors that have accumulated.
-        self.parse( file_like )
 
     def _raise_parse_error( self, source_string, line_number, error_string, parsed_line ):
         """
