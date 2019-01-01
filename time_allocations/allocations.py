@@ -33,116 +33,41 @@ class Allocations( object ):
     # accept integral and fractional, positive durations.
     valid_duration_pattern   = re.compile( r"^((0?\.0*)?[1-9]\d*|[1-9]+\.\d*)$" )
 
-    def __init__( self, file_like, strict_parsing=False, validate_dates=False, default_date=None ):
+    def __init__( self, file_like, strict_parsing=False, validate_dates=False, default_year=None ):
         # XXX: factor this out into a parse routine so additional fragments can
         #      be consumed by the object.
         """
           strict_parsing - Optional flag specifying whether parsing should fail if an invalid
                            line is encountered.  If True, invalid lines cause parsing to fail
-                           with an XXX exception.  Otherwise, invalid lines cause a warning to
+                           with an ValueError exception.  Otherwise, invalid lines cause a warning to
                            be logged to standard error and the internal error count incremented.
                            If omitted, defaults to False.
 
           validate_dates - Optional
-          default_date   - Optional
+          default_year   - Optional
         """
 
         # XXX
-        current_year = None
+        self._current_year = default_year
 
         # XXX:
-        self._number_errors       = 0
+        self._number_errors = 0
 
-        self._allocations_source  = "(string)"
-        self._current_line_number = 0
+        # XXX: pull in year and parsing flag
+        self._configuration = {}
+
+        # XXX:
+        self._number_errors = 0
 
         # determines how improperly formatted lines are handled.  exceptions are
         # raised when strictness is requested, warnings on standard error
         # otherwise.
-        self._strict_parsing      = strict_parsing
+        self._strict_parsing = strict_parsing
 
-        # read in all of the lines if we're working with a file-like object.  we
-        # assume this will never be used on truly large data (100's of thousands
-        # of lines) so we simply buffer the data and move on.
-        if not isinstance( file_like, str ):
-
-            # figure out where these allocations come from.
-            try:
-                self._allocations_source = file_like.name
-            except:
-                self._allocations_source = "(unknown)"
-
-            allocations_string = ""
-
-            while( file_like ):
-                allocations_string += file_like.readline()
-
-            file_like = allocations_string
-
-        # start parsing at the default date.  if we're not supplied one, we need
-        # to parse a date line before an allocation is considered valid.
-        current_date = default_date
-
-        # walk through line-by-line and parse the allocations from cleaned up
-        # lines.
-        for current_line in file_like.split( "\n" ):
-
-            self._current_line_number += 1
-
-            # strip out empty comments.
-            comment_start_index = current_line.find( "#" )
-            if comment_start_index > -1:
-                current_line = current_line[:comment_start_index]
-
-            # remove leading/trailing whitespace.
-            current_line = current_line.strip()
-
-            # ignore empty lines.
-            if len( current_line ) == 0:
-                continue
-
-            # are we looking at the start of a new day?
-            date_status, date_error = Allocations._is_valid_date( current_line,
-                                                                  current_year )
-
-            if date_status is True:
-                weekday, current_date = current_line.split()
-                continue
-
-            allocation_status, allocation_error = Allocations._is_valid_allocation( current_line )
-
-            if allocation_status is True:
-                try:
-                    self._record_allocation( current_date, current_line )
-                except ValueError as e:
-                    # XXX: failed to record (likely no date)
-                    self._number_errors +=1
-
-                    self._raise_parse_error( self._allocations_source,
-                                             self._current_line_number,
-                                             str( e ),
-                                             current_line )
-                continue
-
-            # neither the date nor the allocation are valid, so we need to
-            # determine if we silently ignore this line because it isn't
-            # something we would be expected to parse or if we need to complain
-            # and increment our error count.
-            if (date_status is not True) and Allocations._looks_like_date( current_line ):
-                self._raise_parse_error( self._allocations_source,
-                                         self._current_line_number,
-                                         date_error,
-                                         current_line )
-            elif (allocation_status is not True) and Allocations._looks_like_allocation( current_line ):
-                self._raise_parse_error( self._allocations_source,
-                                         self._current_line_number,
-                                         allocation_error,
-                                         current_line )
-
-            # this line didn't look like either a date or an allocation so we
-            # assume it wasn't something we should parse.  move on to the next
-            # line.
-            pass
+        # we don't care about the status returned.  either we threw an exception
+        # and didn't fully construct an object, or we've complained and the
+        # caller can check a non-zero number of errors that have accumulated.
+        self.parse( file_like )
 
     def _raise_parse_error( self, source_string, line_number, error_string, parsed_line ):
         """
@@ -412,8 +337,167 @@ class Allocations( object ):
 
         pass
 
+    def clear( self ):
+        """
+        Clears existing allocations.  All known categories and their allocations are
+        wiped out so that the allocations from the next call to parse() are the only
+        allocations available.
+
+        Takes no arguments.
+
+        Returns nothing.
+
+        """
+
+        pass
+
+    def get_configuration( self ):
+        """
+        """
+
+        return self._configuration
+
     def number_errors( self ):
         """
         """
 
         return self._number_errors
+
+    def parse( self, file_like, current_year=None, current_configuration=None ):
+        """
+        Parses a block of allocations and merges them into the existing allocations.
+        XXX: raises ValueError or complains depending upon the configuration.
+
+        Takes 3 arguments:
+
+          file_like             -
+          current_year          - XXX: Parse with a temporary year.
+          current_configuration - XXX: Parse with a temporary configuration.
+
+        Returns 1 value:
+
+          status -
+
+        """
+
+        if current_configuration is None:
+            current_configuration = self._configuration
+
+        # XXX: handle the current date being optional
+        if current_year is None:
+            current_year = self._current_year
+
+        # XXX: shouldn't be part of the instance
+        allocations_source  = "(string)"
+        current_line_number = 0
+
+        # note the previous number of errors
+        previous_error_count = self.number_errors()
+
+        # read in all of the lines if we're working with a file-like object.  we
+        # assume this will never be used on truly large data (100's of thousands
+        # of lines) so we simply buffer the data and move on.
+        if not isinstance( file_like, str ):
+
+            # figure out where these allocations come from.
+            try:
+                allocations_source = file_like.name
+            except:
+                allocations_source = "(unknown)"
+
+            allocations_string = ""
+
+            while( file_like ):
+                allocations_string += file_like.readline()
+
+            file_like = allocations_string
+
+        # walk through line-by-line and parse the allocations from cleaned up
+        # lines.
+        for current_line in file_like.split( "\n" ):
+
+            current_line_number += 1
+
+            # strip out empty comments.
+            comment_start_index = current_line.find( "#" )
+            if comment_start_index > -1:
+                current_line = current_line[:comment_start_index]
+
+            # remove leading/trailing whitespace.
+            current_line = current_line.strip()
+
+            # ignore empty lines.
+            if len( current_line ) == 0:
+                continue
+
+            # are we looking at the start of a new day?
+            date_status, date_error = Allocations._is_valid_date( current_line,
+                                                                  current_year )
+
+            if date_status is True:
+                weekday, current_date = current_line.split()
+                continue
+
+            allocation_status, allocation_error = Allocations._is_valid_allocation( current_line )
+
+            if allocation_status is True:
+                try:
+                    self._record_allocation( current_date, current_line )
+                except ValueError as e:
+                    # XXX: failed to record (likely no date)
+                    self._number_errors +=1
+
+                    self._raise_parse_error( allocations_source,
+                                             current_line_number,
+                                             str( e ),
+                                             current_line )
+                continue
+
+            # neither the date nor the allocation are valid, so we need to
+            # determine if we silently ignore this line because it isn't
+            # something we would be expected to parse or if we need to complain
+            # and increment our error count.
+            if (date_status is not True) and Allocations._looks_like_date( current_line ):
+                self._raise_parse_error( allocations_source,
+                                         current_line_number,
+                                         date_error,
+                                         current_line )
+            elif (allocation_status is not True) and Allocations._looks_like_allocation( current_line ):
+                self._raise_parse_error( allocations_source,
+                                         current_line_number,
+                                         allocation_error,
+                                         current_line )
+
+            # this line didn't look like either a date or an allocation so we
+            # assume it wasn't something we should parse.  move on to the next
+            # line.
+            pass
+
+        # parsing is successful if we didn't have any errors.
+        return (self.number_errors() == previous_error_count)
+
+    def set_configuration( self, new_configuration ):
+        """
+        """
+
+        self._configuration = new_configuration
+
+    def to_df( self, filters=None, filter_type=None, depth_limit=0 ):
+        """
+        Converts allocations to a Pandas DataFrame.  A subset of allocations can be filtered
+        in or out based on regular expression or an explicit list, or allocations can be
+        flattened so that a maximum depth is not exceeded.
+
+        Takes 3 arguments:
+
+          filters     -
+          filter_type -
+          depth_limit -
+
+        Returns 1 value:
+
+          df -
+
+        """
+
+        return None
