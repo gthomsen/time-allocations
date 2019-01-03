@@ -60,9 +60,9 @@ class Allocations( object ):
     # cut and paste could result in an allocation that should be flagged while
     # ignoring commonly used divider/comment/formatting lines.
     # XXX: handle just <month>/<date>
-    potential_date_pattern       = re.compile( r"^("
-                                               r"(\w+\s+)?\d+\s*/\s*\d+" + r"|" # optional weekday, with month/date (possibly whitespace padded)
-                                               r"\w+\s+(\d+/\s*|\s*/\d+)"       # weekday with month or date, but not both (possibly whitespace padded)
+    potential_date_pattern       = re.compile( r"^(" +
+                                               r"(\w+\s+)?\d+\s*/\s*\d+" + r"|" + # optional weekday, with month/date (possibly whitespace padded)
+                                               r"\w+\s+(\d+/\s*|\s*/\d+)" +       # weekday with month or date, but not both (possibly whitespace padded)
                                                r")$" )
     # XXX: describe these one per line
     potential_allocation_pattern = re.compile( r"^(" +
