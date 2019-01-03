@@ -48,7 +48,8 @@ class Allocations( object ):
     """
     """
 
-    
+    FILTER_TYPE_EXCLUDE = "exclude"
+    FILTER_TYPE_INCLUDE = "include"
 
     # patterns for date-like and allocation-like lines.  used to determine
     # whether the parser should complain about a line that it didn't parse or
@@ -594,7 +595,7 @@ class Allocations( object ):
 
         self._configuration = new_configuration
 
-    def to_df( self, filters=None, filter_type=None, depth_limit=0 ):
+    def to_df( self, filters=None, filter_type=None, max_depth=-1 ):
         """
         Converts allocations to a Pandas DataFrame.  A subset of allocations can be filtered
         in or out based on regular expression or an explicit list, or allocations can be
@@ -612,4 +613,38 @@ class Allocations( object ):
 
         """
 
-        return None
+        if filters is not None:
+            if (filter_type is None or
+                (filter_type != Allocations.FILTER_TYPE_EXCLUDE and
+                 filter_type != Allocations.FILTER_TYPE_INCLUDE)):
+                raise ValueError( "Filtering was requested though an invalid filter type was provided" )
+
+        import pandas as pd
+
+        # XXX: drop the max_depth option
+
+        max_category_depth = max( map( lambda x: len( x[1] ), self._allocations ),
+                                  default=0 )
+
+        date_duration_list = []
+        index_list         = []
+        index_names_list   = list( map( lambda x: "level_{:02d}".format( x ),
+                                        range( max_category_depth ) ) )
+
+        # build the categories index. XXX
+        for (date_string, categories, duration) in self._allocations:
+            date_duration_list.append( (date_string, duration) )
+
+            categories_list                    = [""] * max_category_depth
+            categories_list[0:len(categories)] = categories
+
+            index_list.append( tuple( categories_list ) )
+
+        multi_index = pd.MultiIndex.from_tuples( index_list,
+                                                 names=index_names_list )
+
+        df = pd.DataFrame.from_records( date_duration_list,
+                                        index=multi_index,
+                                        columns=["date", "duration"] )
+
+        return df
