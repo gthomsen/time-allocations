@@ -85,6 +85,11 @@ class Allocations( object ):
                                            "(0?\.0*)?[1-9]\d*"  +      # fractional values in (0.0, 1.0] (with optional leading zero, and integers
                                            r")$" )
 
+    # match the category and all nested sub-categories into groups #1 and #3.
+    # group #2 represents all of the nested sub-categories along with enclosing
+    # parentheses.
+    valid_categories_pattern = re.compile( r"^([^()]+)(\((.*)\))?$" )
+
     def __init__( self, file_like=None, configuration=None ):
         # XXX: factor this out into a parse routine so additional fragments can
         #      be consumed by the object.
@@ -384,11 +389,63 @@ class Allocations( object ):
         """
         """
 
+        # XXX: move to a better place?
+        def _parse_allocation( allocation_string ):
+            """
+            Decomposes an allocation string into a tuple of categories and the allocation's
+            duration.  The allocation string is assumed to be valid and well-formed according
+            to _is_valid_allocation().
+
+            Takes 1 argument:
+
+              allocation_string -
+
+            Returns 2 values:
+
+              categories_list - Tuple of nested categories in the allocation.
+                                Each entry in the categories tuple corresponds
+                                to the nesting level it was found at.  That is,
+                                categories[4] corresponds to the
+                                sub-sub-sub-category.
+
+              duration        - Floating point duration for the allocation.
+
+            """
+
+            #
+            # NOTE: we return a tuple of categories for two reasons.  one, it is
+            #       an immutable characteristic of the allocation.  two, to make
+            #       conversion to a Pandas DataFrame easier.
+            #
+
+            # decompose our allocation into categories and duration.
+            #
+            # NOTE: assume the allocation is of the form:
+            #
+            #          <category>[ (<subcategory>[ (...)])]: X.Y hours
+            #
+            categories_string, duration_string = allocation_string.split( ":" )
+
+            duration                           = float( duration_string.split()[0] )
+
+            # walk through the string and extract each nested category one at a
+            # time.  we build a list we'll construct a tuple from
+            categories_list = []
+            while categories_string is not None:
+                matches                             = Allocations.valid_categories_pattern.match( categories_string ).groups()
+                current_category, categories_string = matches[0].strip(), matches[2]
+
+                categories_list.append( current_category )
+
+            return (tuple( categories_list ), duration)
+
         if date_string is None:
             # XXX: we don't know where to record this particular allocation.
-            raise ValueError( "" )
+            raise ValueError( "Cannot record allocations without a date" )
 
-        pass
+        categories, duration = _parse_allocation( allocation_string )
+
+        self._allocations.append( (date_string, categories, duration) )
 
     def clear( self ):
         """
