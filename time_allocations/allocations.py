@@ -112,8 +112,8 @@ class Allocations( object ):
         # otherwise.
         self._strict_parsing = configuration.get( "strict_parsing" )
 
-        # we start at zero errors during parsing.
-        self._number_errors = 0
+        # reset the allocations.
+        self.clear()
 
         if file_like is not None:
             self.parse( file_like )
@@ -402,7 +402,9 @@ class Allocations( object ):
 
         """
 
-        pass
+        # XXX:
+        self._allocations   = []
+        self._number_errors = 0
 
     def get_configuration( self ):
         """
