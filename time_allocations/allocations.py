@@ -66,13 +66,24 @@ class Allocations( object ):
                                                r")$" )
     # XXX: describe these one per line
     potential_allocation_pattern = re.compile( r"^(" +
-                                               r"[^:]*:\s*([^:]*((hour|hr)s?)?)?" + r"|" # category/subcategories with duration (possibly invalid) and units
-                                               r".*\d+(\.\d*)? (hour|hr)s?"       +      # anything with a duration and units at the end
+                                               r"[^:]*:\s+([^:]*((hour|hr)s?)?)?" + r"|" + # category/subcategories with duration (possibly invalid) and units
+                                               r".*\d+(\.\d*)? (hour|hr)s?"       +        # anything with a duration and units at the end
                                                r")$",
                                                flags=re.IGNORECASE )
 
     # accept integral and fractional, positive durations.
-    valid_duration_pattern   = re.compile( r"^((0?\.0*)?[1-9]\d*|[1-9]+\.\d*)$" )
+    #
+    # NOTE: the order of this expression matters.  the longest possible match
+    #       for fractional durations who are integral (e.g. 1.0) need to match
+    #       before the integral values (e.g. 1) so the end of string anchor can
+    #       match.  otherwise, this will fail to match valid strings like "10.0"
+    #       as the "10" prefix is matched, but the trailing ".0" fails against
+    #       the anchor.
+    #
+    valid_duration_pattern   = re.compile( r"^(" +
+                                           "[1-9]\d*\.\d*"      + r"|" # fractional values that are at least as big as 1.0
+                                           "(0?\.0*)?[1-9]\d*"  +      # fractional values in (0.0, 1.0] (with optional leading zero, and integers
+                                           r")$" )
 
     def __init__( self, file_like, configuration=None ):
         # XXX: factor this out into a parse routine so additional fragments can
