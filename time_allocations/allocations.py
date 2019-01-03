@@ -85,7 +85,7 @@ class Allocations( object ):
                                            "(0?\.0*)?[1-9]\d*"  +      # fractional values in (0.0, 1.0] (with optional leading zero, and integers
                                            r")$" )
 
-    def __init__( self, file_like, configuration=None ):
+    def __init__( self, file_like=None, configuration=None ):
         # XXX: factor this out into a parse routine so additional fragments can
         #      be consumed by the object.
         """
@@ -417,6 +417,7 @@ class Allocations( object ):
         return self._number_errors
 
     def parse( self, file_like, current_year=None, current_configuration=None ):
+        # XXX: file_like is the wrong name since it ends up being a string
         """
         Parses a block of allocations and merges them into the existing allocations.
         XXX: raises ValueError or complains depending upon the configuration.
@@ -458,16 +459,15 @@ class Allocations( object ):
             except:
                 allocations_source = "(unknown)"
 
-            allocations_string = ""
-
-            while( file_like ):
-                allocations_string += file_like.readline()
+            allocations_string = file_like.readlines()
 
             file_like = allocations_string
+        else:
+            file_like = file_like.splitlines()
 
         # walk through line-by-line and parse the allocations from cleaned up
         # lines.
-        for current_line in file_like.split( "\n" ):
+        for current_line in file_like:
 
             current_line_number += 1
 
