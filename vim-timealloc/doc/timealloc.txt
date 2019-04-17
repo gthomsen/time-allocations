@@ -1,0 +1,91 @@
+*timealloc.txt* functionality for the timealloc language
+
+               _______                      ____
+              /_  __(_)___ ___  ___  ____ _/ / /___  _____
+               / / / / __ `__ \/ _ \/ __ `/ / / __ \/ ___/
+              / / / / / / / / /  __/ /_/ / / / /_/ / /__
+             /_/ /_/_/ /_/ /_/\___/\__,_/_/_/\____/\___/
+                                               Vim Edition
+
+         A time management language and tool for terminal users.
+                                              - Polarsky, 2019 -
+
+
+====================================================================
+CONTENTS                                         *TimeallocContents*
+
+    1. Usage ................ |TimeallocUsage|
+    2. Mappings ............. |TimeallocMappings|
+    3. License .............. |TimeallocLicense|
+    4. Bugs ................. |TimeallocBugs|
+    5. Contributing ......... |TimeallocContributing|
+    6. Changelog ............ |TimeallocChangelog|
+    7. Credits .............. |TimeallocCredits|
+
+====================================================================
+USAGE                                               *TimeallocUsage*
+
+Welcome to the Timealloc Plugin for Vim! There's no time so ...
+... here we go!
+
+Basic Syntax of *.ta timealloc file:
+
+  # Comments look like this.
+  Wednesday 1/9
+
+  CategoryA (subcategory): 1.5 hours
+  CategoryB: 3 hours
+  CategoryC (subcategory (subcategory)) : .5 hours
+  CategoryA : .25 hours
+  CategoryD (subcategory (subcategory)): 1.5 hours
+
+  09:00-19:15 20:30-23:15 (13 hours)
+
+Ex-Commands:
+
+:TimeallocDay()    Inserts 'Weekday M/D' to eol.
+:TimeallocTime()   Inserts a time stamp  to eol.
+:TimeallocNew()    Inserts a new category line to eol.
+:TimeallocUpdate() Updates hours in a time stamp line at eol.
+
+:TADay             Inserts 'Weekday M/D' to eol.
+:TATime            Inserts a time stamp  to eol.
+:TANew             Inserts a new category line to eol.
+:TAUpdate          Updates hours in a time stamp line at eol.
+
+====================================================================
+MAPPINGS                                         *TimeallocMappings*
+
+o                  Typing 'o' in normal mode will bring cursor to
+                   begining of line bellow.
+
+====================================================================
+LICENSE                                           *TimeallocLicense*
+
+MIT License, for more informtion visit:
+  https://github.com/gthomsen/time-allocations/blob/master/LICENSE
+
+====================================================================
+BUGS                                                 *TimeallocBugs*
+
+000                It is possible double dip on repeated time stamps
+001                It is possible erase a category line via 'tahrs'
+                   command/abbreviation.
+
+====================================================================
+CHANGELOG                                       *TimeallocChangelog*
+
+1.00.00            I'm brand new, make me cooler!
+
+====================================================================
+CREDITS                                           *TimeallocCredits*
+
+The orginal idea behind the syntax for Timealloc goes to gthomsen on
+GitHub, whose passion for analyzing time far exceeds my own. As for
+myself, I just like to writing things for Vim. Checkout gthomsen's
+time-allocations repository for more goodies, time allocation
+analysis tools, and future updates (there's even an Emacs
+implementation for the closet-Emacs in all of us :O ).
+
+Repository: https://github.com/gthomsen/time-allocations
+
